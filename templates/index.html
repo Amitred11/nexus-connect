@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Panel | Device Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-start: #0f0c29; --bg-mid: #302b63; --bg-end: #24243e; --surface-color: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1); --primary-color: #00c6ff; --accent-color: #c33764;
+            --text-color: #f0f0f0; --text-secondary: #a0a0a0; --color-warn: #FBBF24; --color-good: #34D399;
+        }
+        body { font-family: 'DM Sans', sans-serif; background: linear-gradient(135deg, var(--bg-start), var(--bg-mid), var(--bg-end)); color: var(--text-color); margin: 0; padding: 30px 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+        .dashboard { max-width: 800px; width: 100%; }
+        h1, h2 { font-weight: 700; }
+        h1 { text-align: center; margin-bottom: 30px; letter-spacing: 1px; }
+        .card { background: var(--surface-color); padding: 25px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border-color); backdrop-filter: blur(10px); }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9em; color: var(--text-secondary); }
+        input, textarea, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: rgba(0,0,0,0.2); color: var(--text-color); font-size: 1rem; box-sizing: border-box; }
+        button { width: 100%; padding: 12px 15px; border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s ease-in-out; display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--primary-color); }
+        button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3); }
+        button:disabled { background-color: #4B5563; cursor: not-allowed; opacity: 0.5; }
+        .btn-danger { background: var(--accent-color); }
+        .btn-danger:hover:not(:disabled) { box-shadow: 0 4px 15px rgba(195, 55, 100, 0.3); }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .btn-outline:hover:not(:disabled) { background: var(--surface-color); color: var(--text-color); border-color: var(--text-color); box-shadow: none;}
+        #status-area { text-align: center; padding: 15px; border-radius: 8px; margin-top: 20px; min-height: 24px; word-wrap: break-word; font-size: 0.9em; font-family: 'Space Mono', monospace; }
+        .status-success { color: #34D399; background-color: rgba(52, 211, 153, 0.1); }
+        .status-error { color: #F87171; background-color: rgba(248, 113, 113, 0.1); }
+        .tab-buttons { display: flex; flex-wrap: wrap; margin-bottom: 20px; background: var(--surface-color); border-radius: 10px; padding: 5px; }
+        .tab-button { background: none; border: none; padding: 10px 15px; color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; flex-grow: 1; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
+        .tab-button.active { color: #fff; background-color: var(--primary-color); }
+        .tab-content { display: none; animation: fadeIn 0.5s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top-color: var(--primary-color); border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .info-grid { display: grid; grid-template-columns: auto 1fr; gap: 10px 20px; font-family: 'Space Mono', monospace; font-size: 0.9rem; }
+        .info-grid strong { color: var(--text-secondary); }
+        .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+        .item-list-item, .device-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 6px; margin-bottom: 8px; background-color: rgba(0,0,0,0.2); font-family: 'Space Mono', monospace; font-size: 0.8rem; }
+        .device-item { cursor: pointer; font-size: 0.9rem; }
+        .device-item:hover { background-color: rgba(0,0,0,0.4); }
+        .shell-output { background-color: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; margin-top: 15px; max-height: 400px; overflow-y: auto; font-family: 'Space Mono', monospace; font-size: 0.8em; white-space: pre-wrap; word-wrap: break-word; }
+        .audit-item { display: flex; align-items: start; gap: 15px; margin-bottom: 15px; }
+        .audit-item-icon { flex-shrink: 0; width: 24px; height: 24px; }
+        .audit-item-icon.good { color: var(--color-good); }
+        .audit-item-icon.warning { color: var(--color-warn); }
+        .audit-item-details strong { color: var(--text-color); display: block; }
+        .audit-item-details p { margin: 0; font-size: 0.9em; color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>Nexus Panel</h1>
+        
+        <div class="card">
+            <h2>Connection</h2>
+            <div class="form-group">
+                <label for="apiKey">API Secret Key</label>
+                <input type="password" id="apiKey" placeholder="Enter the key from the terminal">
+            </div>
+            <div class="form-group">
+                <label for="connectIpPort">Target Device IP Address & Port</label>
+                <input type="text" id="connectIpPort" placeholder="Select from Network Scan or enter manually">
+            </div>
+            <button id="connectBtn" onclick="checkAndConnect()">Connect to Target</button>
+        </div>
+
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="showTab('security')">Security & Health</button>
+            <button class="tab-button" onclick="showTab('shell')">Shell</button>
+            <button class="tab-button" onclick="showTab('processes')">Processes</button>
+            <button class="tab-button" onclick="showTab('info')">Device Info</button>
+            <button class="tab-button" onclick="showTab('apps')">Apps</button>
+            <button class="tab-button" onclick="showTab('mirror')">Mirror</button>
+            <button class="tab-button" onclick="showTab('actions')">Actions</button>
+            <button class="tab-button" onclick="showTab('files')">Files</button>
+            <button class="tab-button" onclick="showTab('network')">Network</button>
+        </div>
+
+        <div id="security" class="tab-content active card">
+            <h2>Security & Health</h2>
+            <div class="action-grid">
+                <button class="requires-connection" onclick="clearCaches()" disabled>Clear All App Caches</button>
+                <button class="requires-connection" onclick="runSecurityAudit()" disabled>Run Security Audit</button>
+            </div>
+            <div id="audit-results" style="margin-top: 20px;"></div>
+            <hr style="border-color: #374151; margin: 20px 0;">
+            <button class="requires-connection" onclick="getConnections()" disabled>Show Active Connections</button>
+            <pre id="connections-results" class="shell-output" style="display: none;"></pre>
+        </div>
+
+        <div id="shell" class="tab-content card">
+            <h2>Direct Shell Executor</h2>
+            <p style="color:var(--text-secondary); font-size:0.9em; margin-top:-10px;"><b>Warning:</b> Execute any `adb shell` command. Use with caution.</p>
+            <div class="form-group">
+                <textarea id="shellCommand" rows="2" placeholder="e.g., ls -l /sdcard/Download"></textarea>
+            </div>
+            <button class="requires-connection" onclick="executeShell()" disabled>Execute Command</button>
+            <pre id="shell-output" class="shell-output" style="display: none;"></pre>
+        </div>
+
+        <div id="processes" class="tab-content card">
+            <h2>Process Manager</h2>
+            <button class="requires-connection" id="listProcessesBtn" onclick="listProcesses()" disabled>List Running Processes</button>
+            <div class="form-group" style="margin-top: 15px;">
+                <input type="text" id="processSearch" onkeyup="filterList('process-list', this.value)" placeholder="Search for a process...">
+            </div>
+            <div id="process-list" style="max-height: 300px; overflow-y: auto;"></div>
+        </div>
+        
+        <div id="info" class="tab-content card">
+            <h2>Device Information</h2>
+            <button class="requires-connection" id="getInfoBtn" onclick="getDeviceInfo()" disabled>Refresh Device Info</button>
+            <div id="device-info-results" class="info-grid" style="margin-top: 20px;"></div>
+        </div>
+        
+        <div id="apps" class="tab-content card">
+            <h2>App Manager</h2>
+            <button class="requires-connection" id="listAppsBtn" onclick="listApps()" disabled>List Installed Apps</button>
+            <div class="form-group" style="margin-top: 15px;">
+                <input type="text" id="appSearch" onkeyup="filterList('app-list', this.value)" placeholder="Search for an app...">
+            </div>
+            <div id="app-list" style="max-height: 300px; overflow-y: auto;"></div>
+        </div>
+
+        <div id="mirror" class="tab-content card">
+            <h2>Mirror & Record</h2>
+            <div class="action-grid">
+                <button class="requires-connection" id="mirrorBtn" onclick="startMirror()" disabled>Start Mirror</button>
+                <button class="requires-connection" id="recordBtn" onclick="startRecording()" disabled>Start Recording</button>
+            </div>
+            <button onclick="stopMirror()" class="btn-danger" style="margin-top: 10px;">Stop Process</button>
+        </div>
+
+        <div id="actions" class="tab-content card">
+            <h2>Device Actions</h2>
+            <label>System Settings</label>
+            <div class="form-group action-grid">
+                <select id="timeoutSelect" class="requires-connection" onchange="performAction('set_timeout', this.value)" disabled>
+                    <option value="" disabled selected>Set Screen Timeout</option>
+                    <option value="60000">1 Minute</option>
+                    <option value="300000">5 Minutes</option>
+                    <option value="600000">10 Minutes</option>
+                    <option value="1800000">30 Minutes</option>
+                </select>
+                <button class="requires-connection btn-outline" onclick="performAction('set_dark_mode', 2)" disabled>Dark Mode</button>
+                <button class="requires-connection btn-outline" onclick="performAction('set_dark_mode', 1)" disabled>Light Mode</button>
+                <button class="requires-connection btn-outline" onclick="performAction('toggle_wifi')" disabled>Toggle Wi-Fi</button>
+            </div>
+            <label>Hardware Key Controls</label>
+            <div class="action-grid">
+                <button class="requires-connection btn-outline" onclick="performAction('volume_up')" disabled>Volume Up</button>
+                <button class="requires-connection btn-outline" onclick="performAction('volume_down')" disabled>Volume Down</button>
+                <button class="requires-connection btn-outline" onclick="performAction('mute')" disabled>Mute</button>
+                <button class="requires-connection btn-outline" onclick="performAction('power')" disabled>Power</button>
+            </div>
+            <hr style="border-color: #374151; margin: 20px 0;">
+            <button class="requires-connection" onclick="performAction('screenshot')" disabled>Take Screenshot</button>
+            <button class="requires-connection btn-danger" onclick="performAction('reboot')" style="margin-top:10px;" disabled>Reboot Phone</button>
+        </div>
+
+        <div id="files" class="tab-content card">
+            <h2>File Management</h2>
+            <div class="form-group">
+                <label for="pullPathInput">Pull File from Phone (Full Path)</label>
+                <input type="text" id="pullPathInput" placeholder="/sdcard/DCIM/Camera/IMG_2023.jpg">
+                <button class="requires-connection" onclick="pullFile()" style="margin-top:8px;" disabled>Pull File</button>
+            </div>
+            <hr style="border-color: #374151; margin: 20px 0;">
+            <div class="form-group">
+                <label for="pushFileInput">Push File to Phone's Download Folder</label>
+                <input type="file" id="pushFileInput">
+                <button class="requires-connection" onclick="uploadFile('push_file', 'pushFileInput')" style="margin-top:8px;" disabled>Push File</button>
+            </div>
+            <div class="form-group">
+                <label for="apkFileInput">Install APK on Phone</label>
+                <input type="file" id="apkFileInput" accept=".apk">
+                <button class="requires-connection" onclick="uploadFile('install_apk', 'apkFileInput')" style="margin-top:8px;" disabled>Install APK</button>
+            </div>
+        </div>
+
+        <div id="network" class="tab-content card">
+            <h2>Network Discovery</h2>
+            <button id="scanBtn" onclick="scanNetwork()">Scan Network</button>
+            <div id="scan-results" style="margin-top: 20px;"></div>
+        </div>
+
+        <div id="status-area">Enter API Key and select a device to begin.</div>
+    </div>
+
+<script>
+    const statusArea = document.getElementById('status-area');
+    const connectIpEl = document.getElementById('connectIpPort');
+    const connectBtn = document.getElementById('connectBtn');
+    const scanBtn = document.getElementById('scanBtn');
+
+    window.addEventListener('load', () => {
+        const savedIp = localStorage.getItem('lastDeviceIp');
+        if (savedIp) connectIpEl.value = savedIp;
+    });
+
+    function getHeaders() {
+        const apiKey = document.getElementById('apiKey').value;
+        if (!apiKey) { setStatus('Please enter the API Secret Key.', 'error'); return null; }
+        return { 'X-Api-Key': apiKey };
+    }
+
+    function setStatus(message, type = 'info') {
+        statusArea.textContent = message;
+        statusArea.className = `status-${type}`;
+    }
+
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        document.querySelector(`.tab-button[onclick="showTab('${tabName}')"]`).classList.add('active');
+    }
+
+    function toggleButtonSpinner(button, showSpinner) {
+        if (showSpinner) {
+            button.disabled = true;
+            if (!button.dataset.originalText) button.dataset.originalText = button.innerHTML;
+            button.innerHTML = '<div class="spinner"></div>';
+        } else {
+            button.disabled = false;
+            if (button.dataset.originalText) button.innerHTML = button.dataset.originalText;
+        }
+    }
+
+    async function apiCall(endpoint, body = {}, isFormData = false) {
+        const authHeaders = getHeaders();
+        if (!authHeaders) return null;
+        const config = { method: 'POST', headers: { ...authHeaders } };
+        if (isFormData) {
+            config.body = body;
+        } else {
+            config.headers['Content-Type'] = 'application/json';
+            config.body = JSON.stringify(body);
+        }
+        try {
+            const response = await fetch(endpoint, config);
+            const data = await response.json();
+            if (!response.ok) {
+                setStatus(data.error || data.message || 'An unknown error occurred.', 'error');
+                return null;
+            }
+            return data;
+        } catch (error) {
+            setStatus(`Network or server error. Invalid response. (Error: ${error})`, 'error');
+            return null;
+        }
+    }
+
+    async function checkAndConnect() {
+        const ip = connectIpEl.value;
+        if (!ip) return setStatus('Please select or enter a Device IP.', 'error');
+        document.querySelectorAll('.requires-connection').forEach(el => el.disabled = true);
+        toggleButtonSpinner(connectBtn, true);
+        setStatus(`Connecting to ${ip}...`, 'info');
+        const data = await apiCall('/connect', { ip_port: ip });
+        toggleButtonSpinner(connectBtn, false);
+        if (data && data.status === 'success') {
+            setStatus(data.message, 'success');
+            document.querySelectorAll('.requires-connection').forEach(el => el.disabled = false);
+            localStorage.setItem('lastDeviceIp', ip);
+        }
+    }
+    
+    async function scanNetwork() {
+        const scanResultsDiv = document.getElementById('scan-results');
+        toggleButtonSpinner(scanBtn, true);
+        setStatus('Scanning network...', 'info');
+        scanResultsDiv.innerHTML = '';
+        const data = await apiCall('/scan_network');
+        toggleButtonSpinner(scanBtn, false);
+        if (data && data.hosts) {
+            if (data.hosts.length === 0) { scanResultsDiv.innerHTML = '<div>No devices found.</div>'; return; }
+            data.hosts.forEach(host => {
+                const deviceDiv = document.createElement('div');
+                deviceDiv.className = 'device-item';
+                deviceDiv.innerHTML = `<span><strong>${host.ip}</strong><br><small style="color: var(--text-secondary);">${host.vendor}</small></span><button style="width: auto; padding: 5px 10px; font-size: 0.8em;" onclick="selectDevice('${host.ip}')">Select</button>`;
+                scanResultsDiv.appendChild(deviceDiv);
+            });
+            setStatus(`Scan complete. Found ${data.hosts.length} devices.`, 'success');
+        } else {
+            scanResultsDiv.innerHTML = '<div>Scan failed.</div>';
+        }
+    }
+
+    function selectDevice(ip) {
+        const port = prompt(`Device ${ip} selected.\nPlease enter the Wireless Debugging port (e.g., 37207):`, '');
+        if (port && !isNaN(port)) {
+            const fullAddress = `${ip}:${port}`;
+            connectIpEl.value = fullAddress;
+            setStatus(`Device selected: ${fullAddress}. Ready to connect.`, 'info');
+            showTab('info');
+        } else if(port !== null) {
+            alert('Invalid port. Please enter numbers only.');
+        }
+    }
+
+    async function getDeviceInfo() {
+        const infoDiv = document.getElementById('device-info-results');
+        const button = document.getElementById('getInfoBtn');
+        toggleButtonSpinner(button, true);
+        setStatus('Fetching device info...', 'info');
+        infoDiv.innerHTML = '';
+        const data = await apiCall('/get_device_info');
+        toggleButtonSpinner(button, false);
+        if (data) {
+            infoDiv.innerHTML = `
+                <strong>Model:</strong><span>${data.model}</span>
+                <strong>Android Version:</strong><span>${data.android_version}</span>
+                <strong>CPU:</strong><span>${data.cpu}</span>
+                <strong>RAM:</strong><span>${data.ram}</span>
+                <strong>Battery:</strong><span>${data.battery_level}% (${data.battery_status})</span>
+                <strong>IP Address:</strong><span>${data.ip_address}</span>
+                <strong>Serial No:</strong><span>${data.serial}</span>
+            `;
+            setStatus('Device info updated.', 'success');
+        }
+    }
+    
+    async function clearCaches() {
+        const button = event.currentTarget;
+        if (!confirm('This will clear cached data for all apps. Continue?')) return;
+        toggleButtonSpinner(button, true);
+        setStatus('Clearing caches... (This may take a minute)', 'info');
+        const data = await apiCall('/clear_caches');
+        toggleButtonSpinner(button, false);
+        if (data) setStatus(data.message, data.status === 'success' ? 'success' : 'error');
+    }
+
+    async function runSecurityAudit() {
+        const button = event.currentTarget;
+        const resultsDiv = document.getElementById('audit-results');
+        toggleButtonSpinner(button, true);
+        setStatus('Running security audit...', 'info');
+        resultsDiv.innerHTML = '';
+        const data = await apiCall('/security_audit');
+        toggleButtonSpinner(button, false);
+        if (data && data.results) {
+            const icon_good = `<svg class="audit-item-icon good" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+            const icon_warn = `<svg class="audit-item-icon warning" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+            data.results.forEach(item => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'audit-item';
+                itemDiv.innerHTML = `<div class="audit-item-icon">${item.level === 'good' ? icon_good : icon_warn}</div><div class="audit-item-details"><strong>${item.check}</strong><p>${item.details}</p></div>`;
+                resultsDiv.appendChild(itemDiv);
+            });
+            setStatus('Security audit complete.', 'success');
+        }
+    }
+    
+    async function getConnections() {
+        const button = event.currentTarget;
+        const resultsPre = document.getElementById('connections-results');
+        toggleButtonSpinner(button, true);
+        setStatus('Fetching active connections...', 'info');
+        resultsPre.style.display = 'none';
+        const data = await apiCall('/get_connections');
+        toggleButtonSpinner(button, false);
+        if (data && data.connections) {
+            resultsPre.textContent = data.connections;
+            resultsPre.style.display = 'block';
+            setStatus('Active connections listed below.', 'success');
+        }
+    }
+    
+    async function listProcesses() {
+        const processListDiv = document.getElementById('process-list');
+        const button = document.getElementById('listProcessesBtn');
+        toggleButtonSpinner(button, true);
+        setStatus('Fetching process list...', 'info');
+        processListDiv.innerHTML = '';
+        const data = await apiCall('/process_manager', { action: 'list' });
+        toggleButtonSpinner(button, false);
+        if (data && data.processes) {
+            const lines = data.processes.split('\n');
+            lines.slice(1).forEach(line => {
+                const parts = line.trim().split(/\s+/);
+                if (parts.length < 9) return;
+                const pid = parts[1];
+                const name = parts[parts.length - 1];
+                const processDiv = document.createElement('div');
+                processDiv.className = 'item-list-item';
+                processDiv.innerHTML = `<span>${name}<br><small style="color:var(--text-secondary)">PID: ${pid}</small></span><button class="btn-danger" style="width:auto;padding:5px 10px;font-size:0.8em;" onclick="killProcess('${name}', this)">Force Stop</button>`;
+                processListDiv.appendChild(processDiv);
+            });
+            setStatus(`Found ${lines.length - 1} running processes.`, 'success');
+        }
+    }
+
+    async function killProcess(packageName, button) {
+        if (!confirm(`Are you sure you want to force-stop ${packageName}? This may cause instability.`)) return;
+        toggleButtonSpinner(button, true);
+        await apiCall('/process_manager', { action: 'kill', package_name: packageName });
+    }
+
+    function filterList(listId, filterValue) {
+        const filter = filterValue.toUpperCase();
+        const items = document.getElementById(listId).getElementsByClassName('item-list-item');
+        for (let i = 0; i < items.length; i++) {
+            const name = items[i].getElementsByTagName('span')[0].textContent;
+            items[i].style.display = name.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+
+    async function executeShell() {
+        const commandInput = document.getElementById('shellCommand');
+        const outputPre = document.getElementById('shell-output');
+        const button = event.currentTarget;
+        if (!commandInput.value) return setStatus('Please enter a shell command.', 'error');
+        toggleButtonSpinner(button, true);
+        setStatus(`Executing: ${commandInput.value}...`, 'info');
+        outputPre.style.display = 'none';
+        const data = await apiCall('/execute_shell', { command: commandInput.value });
+        toggleButtonSpinner(button, false);
+        if (data) {
+            outputPre.textContent = data.output;
+            outputPre.style.display = 'block';
+            setStatus('Command executed.', 'success');
+        }
+    }
+
+    async function startMirror() { await apiCall('/start_mirror'); setStatus('Mirroring started!', 'success'); }
+    async function startRecording() { await apiCall('/start_recording'); setStatus('Recording started!', 'success'); }
+    async function stopMirror() { await apiCall('/stop_mirror'); setStatus('Mirror/Record process stopped.', 'info'); }
+    
+    async function performAction(action, valueOrInputId = null) {
+        const button = event.currentTarget;
+        let value = valueOrInputId;
+        if (typeof valueOrInputId === 'string' && document.getElementById(valueOrInputId)) {
+            value = document.getElementById(valueOrInputId).value;
+        }
+        toggleButtonSpinner(button, true);
+        setStatus(`Executing action: ${action}...`, 'info');
+        const data = await apiCall('/device_action', { action, value });
+        toggleButtonSpinner(button, false);
+        if (data) setStatus(data.message, 'success');
+        if (button.tagName === 'SELECT') button.selectedIndex = 0;
+    }
+
+    async function pullFile() {
+        const pathInput = document.getElementById('pullPathInput');
+        const button = pathInput.nextElementSibling;
+        if (!pathInput.value) return setStatus('Please enter a file path to pull.', 'error');
+        toggleButtonSpinner(button, true);
+        setStatus(`Pulling file: ${pathInput.value}...`, 'info');
+        const data = await apiCall('/pull_file', { path: pathInput.value });
+        toggleButtonSpinner(button, false);
+        if (data) setStatus(data.message, 'success');
+    }
+
+    async function uploadFile(endpoint, inputId) {
+        const fileInput = document.getElementById(inputId);
+        if (fileInput.files.length === 0) return setStatus('Please select a file.', 'error');
+        const button = fileInput.nextElementSibling;
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        toggleButtonSpinner(button, true);
+        setStatus(`Uploading ${fileInput.files[0].name}...`, 'info');
+        const data = await apiCall(`/${endpoint}`, formData, true); 
+        toggleButtonSpinner(button, false);
+        if (data) setStatus(data.message, 'success');
+        fileInput.value = '';
+    }
+</script>
+</body>
+</html>
