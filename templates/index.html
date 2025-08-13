@@ -424,29 +424,25 @@
 
     async function launchAndConnectDroidCam() {
     const button = document.getElementById('droidcamBtn');
-    const deviceIpWithPort = connectIpEl.value; // e.g., "192.168.100.7:32771"
+    const deviceIpWithPort = connectIpEl.value;
     
     if (!deviceIpWithPort) {
         setStatus('Target Device IP is missing.', 'error');
         return;
     }
 
-    // Extract just the IP address, without the port
     const deviceIp = deviceIpWithPort.split(':')[0];
 
     toggleButtonSpinner(button, true);
     setStatus('Step 1/2: Launching DroidCam on phone...', 'info');
 
-    // Step 1: Launch the app on the phone
     const phoneLaunchData = await apiCall('/device_action', { action: 'launch_droidcam' });
 
     if (phoneLaunchData) {
         setStatus('Step 2/2: Launching & connecting PC client...', 'info');
         
-        // Wait a second for the phone app to be ready
         await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Step 2: Launch the client on the PC and tell it to connect
         const pcLaunchData = await apiCall('/launch_pc_client', { ip: deviceIp });
         if (pcLaunchData) {
             setStatus(pcLaunchData.message, 'success');
