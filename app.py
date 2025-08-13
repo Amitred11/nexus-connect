@@ -19,17 +19,24 @@ API_SECRET_KEY = "pogiako"
 UPLOAD_FOLDER = 'uploads'
 PULLED_FILES_FOLDER = 'pulled_files'
 RECORDINGS_FOLDER = 'recordings'
+# NEW: Define the D: drive as the base for all backups
+BACKUP_BASE_DRIVE = 'D:\\'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['PULLED_FILES_FOLDER'] = PULLED_FILES_FOLDER
 app.config['RECORDINGS_FOLDER'] = RECORDINGS_FOLDER
 # --- END CONFIGURATION ---
 
+# Create necessary directories
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(PULLED_FILES_FOLDER, exist_ok=True)
 os.makedirs(RECORDINGS_FOLDER, exist_ok=True)
+# NEW: Ensure the base backup directory exists on the D: drive
+os.makedirs(os.path.join(BACKUP_BASE_DRIVE, 'NexusPanel_Backups'), exist_ok=True)
+os.makedirs(os.path.join(BACKUP_BASE_DRIVE, 'NexusPanel_Photos'), exist_ok=True)
+
 active_process = None
 
-# --- Helper Functions ---
+# --- Helper Functions (Unchanged) ---
 def is_authorized(req):
     return req.headers.get("X-Api-Key") == API_SECRET_KEY
 
@@ -57,6 +64,56 @@ def get_connected_device():
 # --- Main App Routes ---
 @app.route('/')
 def index(): return render_template('index.html')
+
+# --- NEW Backup & Media Routes ---
+@app.route('/backup_device', methods=['POST'])
+def backup_device():
+    if not is_authorized(request): return jsonify({"error": "Unauthorized"}), 401
+    device_id = get_connected_device()
+    if not device_id: return jsonify({"status": "error", "message": "No device connected."}), 400
+
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    backup_folder = os.path.join(BACKUP_BASE_DRIVE, 'NexusPanel_Backups')
+    filename = f"full_backup_{timestamp}.ab"
+    pc_path = os.path.join(backup_folder, filename)
+
+    # The 'adb backup' command. -all includes all apps. -f specifies the output file.
+    # This command can be very slow, so we set a very long timeout.
+    # Note: This command does not produce much stdout, success is determined by the return code.
+    command = ["adb", "-s", device_id, "backup", "-all", "-f", pc_path]
+    success, output = run_command(command, timeout=3600) # 1 hour timeout
+
+    if success:
+        return jsonify({"status": "success", "message": f"Backup process finished. File saved to {pc_path}"})
+    else:
+        # Check if the file was created but is empty, which can happen if the user cancels on the phone
+        if os.path.exists(pc_path) and os.path.getsize(pc_path) == 0:
+            os.remove(pc_path)
+            return jsonify({"status": "error", "message": "Backup was cancelled or failed on the device."})
+        return jsonify({"status": "error", "message": f"Backup failed: {output}"})
+
+@app.route('/download_photos', methods=['POST'])
+def download_photos():
+    if not is_authorized(request): return jsonify({"error": "Unauthorized"}), 401
+    device_id = get_connected_device()
+    if not device_id: return jsonify({"status": "error", "message": "No device connected."}), 400
+
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
+    pc_folder_path = os.path.join(BACKUP_BASE_DRIVE, 'NexusPanel_Photos', f"Photos_{timestamp}")
+    os.makedirs(pc_folder_path, exist_ok=True)
+
+    phone_camera_path = "/sdcard/DCIM/Camera/"
+    
+    # This command can also be slow, so a long timeout is good.
+    command = ["adb", "-s", device_id, "pull", phone_camera_path, pc_folder_path]
+    success, output = run_command(command, timeout=1800) # 30 minute timeout
+
+    if success:
+        # Count the number of files pulled for a better message
+        files_pulled = len(os.listdir(pc_folder_path))
+        return jsonify({"status": "success", "message": f"Successfully pulled {files_pulled} items to {pc_folder_path}"})
+    return jsonify({"status": "error", "message": f"Failed to download photos: {output}"})
+
 
 # --- Security & Health Routes ---
 @app.route('/clear_caches', methods=['POST'])
@@ -160,13 +217,17 @@ def device_action():
     if not is_authorized(request): return jsonify({"error": "Unauthorized"}), 401
     device_id = get_connected_device()
     if not device_id: return jsonify({"status": "error", "message": "No device connected."}), 400
+    
     data = request.json
     action = data.get('action')
     value = data.get('value')
     cmd = ["adb", "-s", device_id]
     message = f"Action '{action}' executed."
+
     key_events = {"volume_up": "24", "volume_down": "25", "mute": "164", "power": "26"}
-    if action == 'reboot': cmd.append('reboot')
+
+    if action == 'reboot':
+        cmd.append('reboot')
     elif action == 'screenshot':
         screenshot_name = f"screenshot_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
         phone_path = f"/sdcard/{screenshot_name}"
@@ -189,10 +250,46 @@ def device_action():
     elif action == 'toggle_wifi':
         cmd.extend(["shell", "svc", "wifi", "toggle"])
         message = "Toggled Wi-Fi. You will be disconnected."
-    else: return jsonify({"status": "error", "message": "Invalid action."}), 400
+    elif action == 'launch_droidcam':
+        cmd.extend(['shell', 'am', 'start', '-n', 'com.dev47apps.obsdroidcam/.MainActivity'])
+        message = "Launched DroidCam OBS on phone. Now start the PC client."
+    else: 
+        return jsonify({"status": "error", "message": "Invalid action received."}), 400
+
     success, output = run_command(cmd)
-    if success: return jsonify({"status": "success", "message": message, "output": output})
+    if success: 
+        return jsonify({"status": "success", "message": message, "output": output})
     return jsonify({"status": "error", "message": f"Action failed: {output}"}), 500
+
+@app.route('/launch_pc_client', methods=['POST'])
+def launch_pc_client():
+    if not is_authorized(request): return jsonify({"error": "Unauthorized"}), 401
+
+    # --- THIS IS YOUR CORRECT, FINAL PATH ---
+    pc_client_path = "C:\\Program Files\\DroidCam\\Client\\bin\\64bit\\droidcam.exe"
+    # --- END CONFIGURATION ---
+
+    device_ip = request.json.get('ip')
+    if not device_ip:
+        return jsonify({"error": "Device IP not provided."}), 400
+
+    if not os.path.exists(pc_client_path):
+        return jsonify({"error": f"DroidCam client not found at path: {pc_client_path}. Please check the path in app.py."}), 500
+
+    try:
+        # --- THE FIX IS HERE ---
+        # 1. Get the directory where the .exe is located
+        pc_client_dir = os.path.dirname(pc_client_path)
+        
+        command = [pc_client_path, "-connect", device_ip, "4747"]
+        
+        # 2. Launch the process and tell it to use its own directory as the working directory
+        subprocess.Popen(command, cwd=pc_client_dir)
+        # --- END OF FIX ---
+        
+        return jsonify({"status": "success", "message": "Attempting to launch and connect DroidCam PC client."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Failed to launch DroidCam client: {e}"}), 500
     
 @app.route('/scan_network', methods=['POST'])
 def scan_network():
@@ -259,6 +356,7 @@ def start_recording():
 
 @app.route('/stop_mirror', methods=['POST'])
 def stop_mirror():
+    
     if not is_authorized(request): return jsonify({"error": "Unauthorized"}), 401
     global active_process
     if active_process:
