@@ -9,45 +9,241 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Space+Mono&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-start: #0f0c29; --bg-mid: #302b63; --bg-end: #24243e; --surface-color: rgba(255, 255, 255, 0.05);
-            --border-color: rgba(255, 255, 255, 0.1); --primary-color: #00c6ff; --accent-color: #c33764;
-            --text-color: #f0f0f0; --text-secondary: #a0a0a0;
+            --bg-color: #090A0F; /* Deep Space Blue */
+            --surface-color: rgba(15, 23, 42, 0.4); /* Nebula Blue Glass */
+            --blur-intensity: 10px;
+            --border-color: rgba(255, 255, 255, 0.15);
+            --primary-glow: rgba(0, 198, 255, 0.5);
+            --accent-glow: rgba(195, 55, 100, 0.6);
+            --primary-color: #00c6ff;
+            --accent-color: #c33764;
+            --text-color: #f0f0f0;
+            --text-secondary: #a0a0a0;
+            --border-radius-lg: 20px;
+            --border-radius-md: 12px;
         }
-        body { font-family: 'DM Sans', sans-serif; background: linear-gradient(135deg, var(--bg-start), var(--bg-mid), var(--bg-end)); color: var(--text-color); margin: 0; padding: 30px 20px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
-        .dashboard { max-width: 800px; width: 100%; }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100%;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* --- Cosmic Background --- */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(ellipse at 70% 80%, rgba(195, 55, 100, 0.15), transparent 50%),
+                        radial-gradient(ellipse at 30% 20%, rgba(0, 198, 255, 0.15), transparent 50%);
+            z-index: -11;
+            animation: rotateNebula 180s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+        }
+        
+        @keyframes rotateNebula {
+            from { transform: rotate(0deg) scale(1.2); }
+            to { transform: rotate(360deg) scale(1.2); }
+        }
+        
+        .stars-bg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            z-index: -10;
+            background: transparent;
+        }
+
+        .s1 {
+            width: 1px;
+            height: 1px;
+            box-shadow: 0 0 0 1px #fff1, /* Generate star shadows */
+                329px 1011px 0 1px #fff1, 1021px 177px 0 0px #fff1, 915px 486px 0 1px #fff1, 1915px 158px 0 1px #fff1, 1083px 1475px 0 1px #fff1, 58px 65px 0 0px #fff1, 1067px 1199px 0 0px #fff1, 882px 1423px 0 0px #fff1, 1269px 926px 0 0px #fff1, 1189px 388px 0 0px #fff1, 1341px 1295px 0 0px #fff1, 1683px 577px 0 1px #fff1, 105px 1285px 0 1px #fff1, 1879px 1249px 0 0px #fff1, 1490px 1419px 0 0px #fff1, 1046px 143px 0 1px #fff1, 1502px 1353px 0 0px #fff1, 477px 921px 0 0px #fff1, 1999px 1001px 0 0px #fff1, 859px 691px 0 1px #fff1, 481px 100px 0 1px #fff1, 111px 1018px 0 1px #fff1, 74px 1175px 0 1px #fff1, 1530px 1133px 0 1px #fff1, 1729px 401px 0 0px #fff1, 137px 703px 0 0px #fff1, 1076px 1827px 0 1px #fff1, 331px 1978px 0 0px #fff1, 1445px 1948px 0 0px #fff1;
+            animation: moveStars 150s linear infinite;
+        }
+
+        .s2 {
+            width: 2px;
+            height: 2px;
+            box-shadow: 0 0 0 1px #fff1, /* Generate medium star shadows */
+                531px 1581px 0 1px #fff1, 401px 967px 0 0px #fff1, 126px 1775px 0 0px #fff1, 1498px 232px 0 1px #fff1, 1172px 1311px 0 1px #fff1, 1667px 295px 0 0px #fff1, 1403px 1836px 0 0px #fff1, 1863px 1989px 0 0px #fff1, 1792px 1332px 0 1px #fff1, 1630px 1109px 0 0px #fff1, 843px 1405px 0 0px #fff1, 491px 852px 0 1px #fff1, 35px 79px 0 0px #fff1, 1904px 93px 0 0px #fff1, 1587px 998px 0 0px #fff1, 109px 1355px 0 1px #fff1, 1316px 1528px 0 0px #fff1;
+            animation: moveStars 120s linear infinite;
+        }
+
+        .s3 {
+            width: 3px;
+            height: 3px;
+            box-shadow: 0 0 0 1px #fff1, /* Generate large star shadows */
+                556px 106px 0 0px #fff1, 169px 937px 0 1px #fff1, 1713px 566px 0 0px #fff1, 1261px 1279px 0 1px #fff1, 1411px 1748px 0 0px #fff1, 1205px 1834px 0 0px #fff1, 195px 337px 0 0px #fff1, 810px 1955px 0 0px #fff1, 1813px 1541px 0 0px #fff1, 1157px 705px 0 0px #fff1;
+            animation: moveStars 100s linear infinite;
+        }
+
+        @keyframes moveStars {
+            from { transform: translateY(-1000px); }
+            to { transform: translateY(1000px); }
+        }
+
+        /* --- UI Elements --- */
+        .dashboard {
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
         h1, h2 { font-weight: 700; }
-        h1 { text-align: center; margin-bottom: 30px; letter-spacing: 1px; }
-        .card { background: var(--surface-color); padding: 25px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--border-color); backdrop-filter: blur(10px); }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            letter-spacing: 2px;
+            font-size: 2.5rem;
+            text-shadow: 0 0 15px var(--primary-glow);
+        }
+        
+        h2 {
+            margin-top: 0;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: var(--surface-color);
+            padding: 30px;
+            border-radius: var(--border-radius-lg);
+            margin-bottom: 25px;
+            backdrop-filter: blur(var(--blur-intensity));
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: all 0.3s ease;
+            position: relative;
+            border: 1px solid transparent;
+        }
+
+       .card::before {
+            content: "";
+            position: absolute;
+            inset: -1px; 
+            border-radius: var(--border-radius-lg);
+            background: linear-gradient(135deg, rgba(0, 198, 255, 0.6), rgba(255, 255, 255, 0.1));
+            z-index: -1; 
+            pointer-events: none;
+        }
+
         .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9em; color: var(--text-secondary); }
-        input, textarea, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background-color: rgba(0,0,0,0.2); color: var(--text-color); font-size: 1rem; box-sizing: border-box; }
-        button { width: 100%; padding: 12px 15px; border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s ease-in-out; display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--primary-color); }
-        button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3); }
-        button:disabled { background-color: #4B5563; cursor: not-allowed; opacity: 0.5; }
-        .btn-danger { background: var(--accent-color); }
-        .btn-danger:hover:not(:disabled) { box-shadow: 0 4px 15px rgba(195, 55, 100, 0.3); }
-        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
-        .btn-outline:hover:not(:disabled) { background: var(--surface-color); color: var(--text-color); border-color: var(--text-color); box-shadow: none;}
-        #status-area { text-align: center; padding: 15px; border-radius: 8px; margin-top: 20px; min-height: 24px; word-wrap: break-word; font-size: 0.9em; font-family: 'Space Mono', monospace; }
-        .status-success { color: #34D399; background-color: rgba(52, 211, 153, 0.1); }
-        .status-error { color: #F87171; background-color: rgba(248, 113, 113, 0.1); }
-        .tab-buttons { display: flex; flex-wrap: wrap; margin-bottom: 20px; background: var(--surface-color); border-radius: 10px; padding: 5px; }
-        .tab-button { background: none; border: none; padding: 10px 15px; color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; flex-grow: 1; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
-        .tab-button.active { color: #fff; background-color: var(--primary-color); }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 14px;
+            border-radius: var(--border-radius-md);
+            border: 1px solid var(--border-color);
+            background-color: rgba(0,0,0,0.3);
+            color: var(--text-color);
+            font-size: 1rem;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        input::placeholder, textarea::placeholder { color: var(--text-secondary); opacity: 0.7; }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px 18px;
+            border: none;
+            border-radius: var(--border-radius-md);
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: linear-gradient(45deg, var(--primary-color), #2979ff);
+            box-shadow: 0 4px 15px 0 rgba(0, 198, 255, 0.3);
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px 0 rgba(0, 198, 255, 0.4);
+        }
+
+        button:disabled { background: #4B5563; box-shadow: none; cursor: not-allowed; opacity: 0.5; }
+
+        .btn-danger { background: linear-gradient(45deg, var(--accent-color), #ef5734); box-shadow: 0 4px 15px rgba(195, 55, 100, 0.3); }
+        .btn-danger:hover:not(:disabled) { box-shadow: 0 6px 20px rgba(195, 55, 100, 0.4); }
+
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); box-shadow: none; }
+        .btn-outline:hover:not(:disabled) { background: var(--surface-color); color: var(--text-color); border-color: var(--primary-color); transform: translateY(-2px); box-shadow: 0 0 10px var(--primary-glow); }
+        
+        .tab-buttons { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 25px; background: rgba(15, 23, 42, 0.6); border-radius: var(--border-radius-lg); padding: 6px; border: 1px solid var(--border-color); backdrop-filter: blur(var(--blur-intensity)); }
+        .tab-button { background: none; border: none; padding: 10px 15px; color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; flex-grow: 1; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; position: relative; }
+        .tab-button.active { color: #fff; background-color: var(--primary-color); box-shadow: 0 0 15px var(--primary-glow); }
+        .tab-button:not(.active):hover { background-color: rgba(255, 255, 255, 0.1); color: var(--text-color); }
+
         .tab-content { display: none; animation: fadeIn 0.5s; }
         .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top-color: var(--primary-color); border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .info-grid { display: grid; grid-template-columns: auto 1fr; gap: 10px 20px; font-family: 'Space Mono', monospace; font-size: 0.9rem; }
-        .info-grid strong { color: var(--text-secondary); }
-        .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
-        .item-list-item, .device-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 6px; margin-bottom: 8px; background-color: rgba(0,0,0,0.2); font-family: 'Space Mono', monospace; font-size: 0.8rem; }
-        .device-item { cursor: pointer; font-size: 0.9rem; }
-        .device-item:hover { background-color: rgba(0,0,0,0.4); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #status-area { text-align: center; padding: 15px; border-radius: var(--border-radius-md); margin-top: 25px; font-size: 0.9em; font-family: 'Space Mono', monospace; border: 1px solid transparent; background: var(--surface-color); backdrop-filter: blur(var(--blur-intensity)); min-height: 24px; word-wrap: break-word; }
+        .status-success { color: #34D399; border-color: rgba(52, 211, 153, 0.5); box-shadow: 0 0 15px rgba(52, 211, 153, 0.3); }
+        .status-error { color: #F87171; border-color: rgba(248, 113, 113, 0.5); box-shadow: 0 0 15px rgba(248, 113, 113, 0.3); }
+        .status-info { color: var(--text-secondary); border-color: var(--border-color); }
+        
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        .info-grid { display: grid; grid-template-columns: auto 1fr; gap: 12px 25px; font-family: 'Space Mono', monospace; font-size: 0.95rem; }
+        .info-grid strong { color: var(--text-secondary); font-weight: 400; }
+        
+        .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+        
+        hr { border: 0; height: 1px; background-color: var(--border-color); margin: 30px 0; }
+        
+        .item-list-item, .device-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-radius: var(--border-radius-md); margin-bottom: 8px; background-color: rgba(0,0,0,0.3); font-family: 'Space Mono', monospace; font-size: 0.85rem; border: 1px solid transparent; transition: all 0.2s ease; }
+        .device-item, .item-list-item:hover { cursor: pointer; background-color: rgba(0,0,0,0.5); border-color: var(--border-color); transform: translateY(-2px); }
+        
+        .shell-output { background-color: rgba(0,0,0,0.4); padding: 15px; border-radius: var(--border-radius-md); margin-top: 20px; font-family: 'Space Mono', monospace; white-space: pre-wrap; word-break: break-all; max-height: 250px; overflow-y: auto; }
     </style>
 </head>
 <body>
+    <div class="stars-bg s1"></div>
+    <div class="stars-bg s2"></div>
+    <div class="stars-bg s3"></div>
+
     <div class="dashboard">
         <h1>Nexus Panel</h1>
         
@@ -66,7 +262,7 @@
 
         <div class="tab-buttons">
             <button class="tab-button active" onclick="showTab('security')">Security & Health</button>
-            <button class="tab-button active" onclick="showTab('backup')">Backup & Media</button>
+            <button class="tab-button" onclick="showTab('backup')">Backup & Media</button>
             <button class="tab-button" onclick="showTab('shell')">Shell</button>
             <button class="tab-button" onclick="showTab('processes')">Processes</button>
             <button class="tab-button" onclick="showTab('info')">Device Info</button>
@@ -77,21 +273,6 @@
             <button class="tab-button" onclick="showTab('network')">Network</button>
         </div>
 
-        <div id="backup" class="tab-content active card">
-            <h2>Backup & Media</h2>
-            <div class="form-group">
-                <label>Full Device Backup</label>
-                <p style="color:var(--text-secondary); font-size:0.9em; margin-top: -5px;">This will create a full backup (.ab file) of your device on your PC's D: drive. You must confirm the action on your phone's screen.</p>
-                <button class="requires-connection" onclick="backupDevice()" disabled>Start Full Backup</button>
-            </div>
-            <hr style="border-color: #374151; margin: 20px 0;">
-            <div class="form-group">
-                <label>Download All Photos</label>
-                <p style="color:var(--text-secondary); font-size:0.9em; margin-top: -5px;">Pulls all photos/videos from /sdcard/DCIM/Camera to a new folder on your PC's D: drive.</p>
-                <button class="requires-connection" onclick="downloadPhotos()" disabled>Download All Photos</button>
-            </div>
-        </div>
-
         <div id="security" class="tab-content active card">
             <h2>Security & Health</h2>
             <div class="action-grid">
@@ -99,11 +280,27 @@
                 <button class="requires-connection" onclick="runSecurityAudit()" disabled>Run Security Audit</button>
             </div>
             <div id="audit-results" style="margin-top: 20px;"></div>
-            <hr style="border-color: #374151; margin: 20px 0;">
+            <hr>
             <button class="requires-connection" onclick="getConnections()" disabled>Show Active Connections</button>
             <pre id="connections-results" class="shell-output" style="display: none;"></pre>
         </div>
 
+        <div id="backup" class="tab-content card">
+            <h2>Backup & Media</h2>
+            <div class="form-group">
+                <label>Full Device Backup</label>
+                <p style="color:var(--text-secondary); font-size:0.9em; margin-top: -5px;">This will create a full backup (.ab file) of your device on your PC's D: drive. You must confirm the action on your phone's screen.</p>
+                <button class="requires-connection" onclick="backupDevice()" disabled>Start Full Backup</button>
+            </div>
+            <hr>
+            <div class="form-group">
+                <label>Download All Photos</label>
+                <p style="color:var(--text-secondary); font-size:0.9em; margin-top: -5px;">Pulls all photos/videos from /sdcard/DCIM/Camera to a new folder on your PC's D: drive.</p>
+                <button class="requires-connection" onclick="downloadPhotos()" disabled>Download All Photos</button>
+            </div>
+        </div>
+
+        <!-- The rest of the HTML body is identical to the previous version -->
         <div id="shell" class="tab-content card">
             <h2>Direct Shell Executor</h2>
             <p style="color:var(--text-secondary); font-size:0.9em; margin-top:-10px;"><b>Warning:</b> Execute any `adb shell` command. Use with caution.</p>
@@ -148,46 +345,45 @@
         </div>
 
         <div id="actions" class="tab-content card">
-    <h2>Device Actions</h2>
-    
-    <label>Remote Webcam (via DroidCam)</label>
-    <div class="form-group">
-        <p style="color:var(--text-secondary); font-size:0.9em; margin-top: -5px;">
-            Requires DroidCam installed on PC and Phone. This button will launch the app on your phone.
-        </p>
-        <button class="requires-connection" id="droidcamBtn" onclick="launchAndConnectDroidCam()" style="background-color: #16A34A;" disabled>
-         <!-- The SVG icon remains the same -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
-        Launch & Connect Webcam
-        </button>
-    </div>
-    
-    <label>System Settings</label>
-    <div class="form-group action-grid">
-        <select id="timeoutSelect" class="requires-connection" onchange="performAction('set_timeout', this)" disabled>
-            <option value="" disabled selected>Set Screen Timeout</option>
-            <option value="60000">1 Minute</option>
-            <option value="300000">5 Minutes</option>
-            <option value="600000">10 Minutes</option>
-            <option value="1800000">30 Minutes</option>
-        </select>
-        <button class="requires-connection btn-outline" onclick="performAction('set_dark_mode', 2)" disabled>Dark Mode</button>
-        <button class="requires-connection btn-outline" onclick="performAction('set_dark_mode', 1)" disabled>Light Mode</button>
-        <button class="requires-connection btn-outline" onclick="performAction('toggle_wifi')" disabled>Toggle Wi-Fi</button>
-    </div>
+            <h2>Device Actions</h2>
+            
+            <label>Remote Webcam (via DroidCam)</label>
+            <div class="form-group">
+                <p style="color:var(--text-secondary); font-size:0.9em; margin-top: -5px;">
+                    Requires DroidCam installed on PC and Phone. This button will launch the app on your phone.
+                </p>
+                <button class="requires-connection" id="droidcamBtn" onclick="launchAndConnectDroidCam()" style="background: linear-gradient(45deg, #16A34A, #34D399);" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                    Launch & Connect Webcam
+                </button>
+            </div>
+            
+            <label>System Settings</label>
+            <div class="form-group action-grid">
+                <select id="timeoutSelect" class="requires-connection" onchange="performAction('set_timeout', this)" disabled>
+                    <option value="" disabled selected>Set Screen Timeout</option>
+                    <option value="60000">1 Minute</option>
+                    <option value="300000">5 Minutes</option>
+                    <option value="600000">10 Minutes</option>
+                    <option value="1800000">30 Minutes</option>
+                </select>
+                <button class="requires-connection btn-outline" onclick="performAction('set_dark_mode', 2)" disabled>Dark Mode</button>
+                <button class="requires-connection btn-outline" onclick="performAction('set_dark_mode', 1)" disabled>Light Mode</button>
+                <button class="requires-connection btn-outline" onclick="performAction('toggle_wifi')" disabled>Toggle Wi-Fi</button>
+            </div>
 
-    <label>Hardware Key Controls</label>
-    <div class="action-grid">
-        <button class="requires-connection btn-outline" onclick="performAction('volume_up')" disabled>Volume Up</button>
-        <button class="requires-connection btn-outline" onclick="performAction('volume_down')" disabled>Volume Down</button>
-        <button class="requires-connection btn-outline" onclick="performAction('mute')" disabled>Mute</button>
-        <button class="requires-connection btn-outline" onclick="performAction('power')" disabled>Power</button>
-    </div>
+            <label>Hardware Key Controls</label>
+            <div class="action-grid">
+                <button class="requires-connection btn-outline" onclick="performAction('volume_up')" disabled>Volume Up</button>
+                <button class="requires-connection btn-outline" onclick="performAction('volume_down')" disabled>Volume Down</button>
+                <button class="requires-connection btn-outline" onclick="performAction('mute')" disabled>Mute</button>
+                <button class="requires-connection btn-outline" onclick="performAction('power')" disabled>Power</button>
+            </div>
 
-    <hr style="border-color: #374151; margin: 20px 0;">
-    <button class="requires-connection" onclick="performAction('screenshot')" disabled>Take Screenshot</button>
-    <button class="requires-connection btn-danger" onclick="performAction('reboot')" style="margin-top:10px;" disabled>Reboot Phone</button>
-</div>
+            <hr>
+            <button class="requires-connection" onclick="performAction('screenshot')" disabled>Take Screenshot</button>
+            <button class="requires-connection btn-danger" onclick="performAction('reboot')" style="margin-top:10px;" disabled>Reboot Phone</button>
+        </div>
 
         <div id="files" class="tab-content card">
             <h2>File Management</h2>
@@ -196,7 +392,7 @@
                 <input type="text" id="pullPathInput" placeholder="/sdcard/DCIM/Camera/IMG_2023.jpg">
                 <button class="requires-connection" onclick="pullFile()" style="margin-top:8px;" disabled>Pull File</button>
             </div>
-            <hr style="border-color: #374151; margin: 20px 0;">
+            <hr>
             <div class="form-group">
                 <label for="pushFileInput">Push File to Phone's Download Folder</label>
                 <input type="file" id="pushFileInput">
@@ -215,7 +411,7 @@
             <div id="scan-results" style="margin-top: 20px;"></div>
         </div>
 
-        <div id="status-area">Enter API Key and select a device to begin.</div>
+        <div id="status-area" class="status-info">Enter API Key and select a device to begin.</div>
     </div>
 
 <script>
@@ -227,6 +423,7 @@
     window.addEventListener('load', () => {
         const savedIp = localStorage.getItem('lastDeviceIp');
         if (savedIp) connectIpEl.value = savedIp;
+        showTab('security');
     });
 
     function getHeaders() {
@@ -423,34 +620,34 @@
     }
 
     async function launchAndConnectDroidCam() {
-    const button = document.getElementById('droidcamBtn');
-    const deviceIpWithPort = connectIpEl.value;
-    
-    if (!deviceIpWithPort) {
-        setStatus('Target Device IP is missing.', 'error');
-        return;
-    }
-
-    const deviceIp = deviceIpWithPort.split(':')[0];
-
-    toggleButtonSpinner(button, true);
-    setStatus('Step 1/2: Launching DroidCam on phone...', 'info');
-
-    const phoneLaunchData = await apiCall('/device_action', { action: 'launch_droidcam' });
-
-    if (phoneLaunchData) {
-        setStatus('Step 2/2: Launching & connecting PC client...', 'info');
+        const button = document.getElementById('droidcamBtn');
+        const deviceIpWithPort = connectIpEl.value;
         
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const pcLaunchData = await apiCall('/launch_pc_client', { ip: deviceIp });
-        if (pcLaunchData) {
-            setStatus(pcLaunchData.message, 'success');
+        if (!deviceIpWithPort) {
+            setStatus('Target Device IP is missing.', 'error');
+            return;
         }
+
+        const deviceIp = deviceIpWithPort.split(':')[0];
+
+        toggleButtonSpinner(button, true);
+        setStatus('Step 1/2: Launching DroidCam on phone...', 'info');
+
+        const phoneLaunchData = await apiCall('/device_action', { action: 'launch_droidcam' });
+
+        if (phoneLaunchData) {
+            setStatus('Step 2/2: Launching & connecting PC client...', 'info');
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            const pcLaunchData = await apiCall('/launch_pc_client', { ip: deviceIp });
+            if (pcLaunchData) {
+                setStatus(pcLaunchData.message, 'success');
+            }
+        }
+        
+        toggleButtonSpinner(button, false);
     }
-    
-    toggleButtonSpinner(button, false);
-}
 
     async function killProcess(packageName, button) {
         if (!confirm(`Are you sure you want to force-stop ${packageName}? This may cause instability.`)) return;
@@ -513,17 +710,17 @@
     async function stopMirror() { await apiCall('/stop_mirror'); setStatus('Mirror/Record process stopped.', 'info'); }
     
     async function performAction(action, valueOrInputId = null) {
-        const button = event.currentTarget;
-        let value = valueOrInputId;
-        if (typeof valueOrInputId === 'string' && document.getElementById(valueOrInputId)) {
-            value = document.getElementById(valueOrInputId).value;
-        }
-        toggleButtonSpinner(button, true);
+        let button = event.currentTarget;
+        if (button.tagName !== 'BUTTON') { /* handling for select elements */ } 
+        else { toggleButtonSpinner(button, true); }
+
+        let value = (typeof valueOrInputId === 'object' && valueOrInputId !== null) ? valueOrInputId.value : valueOrInputId;
         setStatus(`Executing action: ${action}...`, 'info');
         const data = await apiCall('/device_action', { action, value });
-        toggleButtonSpinner(button, false);
+        
+        if (button.tagName === 'BUTTON') { toggleButtonSpinner(button, false); }
         if (data) setStatus(data.message, 'success');
-        if (button.tagName === 'SELECT') button.selectedIndex = 0;
+        if (event.currentTarget.tagName === 'SELECT') event.currentTarget.selectedIndex = 0;
     }
 
     async function pullFile() {
